@@ -1,1 +1,3 @@
 g++ bicycle_detect_camera.cpp -o main `pkg-config opencv --cflags --libs`
+
+clang++ -std=c++11 -stdlib=libc++  BikeTracker.cpp -o detector `pkg-config opencv --cflags --libs`
