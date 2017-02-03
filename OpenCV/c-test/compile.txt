@@ -1,0 +1,1 @@
+g++ bicycle_detect_camera.cpp -o main `pkg-config opencv --cflags --libs`
