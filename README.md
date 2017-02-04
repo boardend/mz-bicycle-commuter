@@ -19,10 +19,10 @@ The project has three major parts.
 This is just a prototype. While it runs ok on a laptop, it really struggles on a Raspberry Pi 3.
 ### The prototype:
 <img src="https://raw.githubusercontent.com/boardend/mz-bicycle-commuter/master/Images/bicycle_tracker.jpg" width="300">
+<img src="https://raw.githubusercontent.com/boardend/mz-bicycle-commuter/master/Images/demo.png" width="500">
 
 ### The web client:
 <img src="https://raw.githubusercontent.com/boardend/mz-bicycle-commuter/master/Images/mobile_website.png" width="300">
-
 
 ## Licence
 * Code: MIT [License](LICENSE)
