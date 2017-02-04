@@ -46,7 +46,7 @@ int main( int argc, char** argv )
 
     CommandLineParser parser(argc, argv, keys);
     string model_path(parser.get<string>(0));
-
+    bool show_image (parser.get<bool>(1));
 
     // init DPM
     Ptr<DPMDetector> detector = \
@@ -80,7 +80,9 @@ int main( int argc, char** argv )
     }
 
     // create window
-//    namedWindow("tracker", 1);
+    if (show_image) {
+        namedWindow("tracker", 1);
+    }
 
     while (true){
         //get the frame
@@ -178,7 +180,9 @@ int main( int argc, char** argv )
         }
 
         // show image with the tracked object
-//        imshow("tracker",frame);
+        if(show_image) {
+            imshow("tracker",frame);
+        }
         if(waitKey(1)==27)break;
     }
     return 0;
