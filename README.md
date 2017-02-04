@@ -11,7 +11,18 @@
 * Existing Data at [Daten der automatischen Fussgänger- und Velozählung - Viertelstundenwerte](https://data.stadt-zuerich.ch/dataset/verkehrszaehlungen-werte-fussgaenger-velo)
 
 ## About OpenCV Bicycle Counter
-`TODO`
+The project has three major parts.
+* The detecto. A C++ program which detects and tracks the bicycles and writes the count to a files.
+* The transmitter. A bash script, which runs as Crontab and which uploads the data to the TTN.
+* The client application. A website, which shows the counts an updates itself when a new count arrives.
+
+This is just a prototype. While it runs ok on a laptop, it really struggles on a Raspberry Pi 3.
+### The prototype:
+<img src="Images/bicycle_tracker.jpg" width="300">
+
+### The web client:
+<img src="Images/mobile_website.png" width="300">
+
 
 ## Licence
 * Code: MIT [License](LICENSE)
