@@ -60,9 +60,10 @@ int main( int argc, char** argv )
     int count = 0;
     //use web camera
     VideoCapture capture(0);
-    capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-    capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
-    capture.set(CV_CAP_PROP_CONVERT_RGB, false);
+    capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
+    capture.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+  //  capture.set(CV_CAP_PROP_CONVERT_RGB, false);
+	  capture.set(CV_CAP_PROP_FPS, 10);
     double fps = capture.get(CAP_PROP_FPS);
 
      cout << fps << endl;
@@ -83,7 +84,7 @@ int main( int argc, char** argv )
     if (show_image) {
         namedWindow("tracker", 1);
     }
-
+    int frame_count = 10;
     while (true){
         //get the frame
         capture >> frame;
@@ -96,6 +97,14 @@ int main( int argc, char** argv )
         //DPM detection
         if( ENTER_LEAVE )
         {
+            if ((++frame_count % 10) != 0) {
+              // cout << "skip" << endl;
+              continue;
+            }
+            // cout << "no skip" << endl;
+
+            frame_count = 0;
+
             double t = (double) getTickCount(); //start time
 
             frame.copyTo(image);
