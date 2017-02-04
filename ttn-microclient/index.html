@@ -1,0 +1,290 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>The Things Network microclient</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,300italic,700,700italic">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.1.0/milligram.min.css">
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+    <style>
+      .wrapper {
+        position: relative;
+        display: block;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      .container {
+        max-width: 80.0rem;
+        margin-bottom: 0;
+        padding: 2.5rem;
+        padding-bottom: 2.5rem;
+      }
+
+      .drop-shadow {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      }
+
+      .header .container {
+        text-align: center;
+        padding: 8.5rem 2rem 0 2rem;
+      }
+
+      .connect {
+        max-height: 50rem;
+        transition: all cubic-bezier(.55,0,.1,1) 350ms;
+        overflow: hidden;
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+
+      .hidden {
+        max-height: 0;
+      }
+
+      .feed {
+        list-style: none;
+      }
+
+      .activity {
+        background-color: #fafafa;
+        padding-bottom: 7.5rem;
+      }
+
+      .card {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 2px;
+      }
+
+      .card .message {
+        margin-bottom: 0;
+        line-height: 1;
+        font-weight: bold;
+      }
+
+      .card .message-time {
+        margin-bottom: 1rem;
+        font-size: 0.5em;
+      }
+
+      .card dl {
+        margin-bottom: 0;
+      }
+
+      .card dt {
+        font-size: 1rem;
+        text-transform: uppercase;
+        margin: 0;
+      }
+      .card dd {
+        font-size: 1.3rem;
+        margin: 0 0 1rem 0;
+      }
+
+      #overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #6D929B;
+        z-index: 10000
+      }
+
+      #overlay .count {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 49%;
+        background-color: #F5FAFA;
+        z-index: 10000;
+        vertical-align: middle;
+        text-align:center;
+        display:table;
+      }
+
+      .count .span-wrapper {
+        text-align: center;
+        display:table-cell;
+        vertical-align: middle;
+        font-color: #6D929B;
+      }
+
+      .count .arrow {
+        font-size: 50px;
+      }
+
+      .count .count-int {
+        font-size: 100px;
+        font-weight: bold;
+        font-color: #ACD1E9;
+      }
+
+      #overlay .left-count {
+        top: 0;
+      }
+
+      #overlay .right-count {
+        bottom: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="overlay" style="display:none">
+      <div class="count left-count">
+        <div class="span-wrapper">
+          <span id="left-count" class="count-int">3</span>
+          <br />
+          <span class="arrow">&lt;&#8212;</span>
+        </div>
+      </div>
+      <div class="count right-count">
+        <div class="span-wrapper">
+          <span class="arrow">&#8212;&gt;</span>
+          <br />
+          <span id="right-count" class="count-int">2</span>
+        </div>
+      </div>
+    </div>
+    <main class="wrapper">
+      <section class="container connect">
+        <h3>Connect</h3>
+        <form action="/">
+          <fieldset>
+            <label for="region">Region</label>
+            <input type="text" value="eu" id="region" name="region">
+            <label for="app_id">App ID</label>
+            <input type="text" value="mz-bicycle-commuter" id="app_id" name="app_id">
+            <label for="access_key">Access Key</label>
+            <input type="password" placeholder="Access Key" id="access_key" name="access_key">
+            <input class="button-primary float-right" type="submit" value="Connect">
+          </fieldset>
+        </form>
+      </section>
+
+      <section class="container activity">
+        <h3>Activity</h3>
+
+        <ul class="feed">
+        </ul>
+
+        <button class="button button-clear float-right">Clear</button>
+      </section>
+    </main>
+
+    <script>
+      var socket = io('/');
+
+      var addFullScreenInfo = function(message, data) {
+        document.getElementById("overlay").style.display = 'block';
+
+        obj = JSON.parse(data.payload_plain);
+
+        document.getElementById("left-count").innerHTML = obj.left;
+        document.getElementById("right-count").innerHTML = obj.right;
+      }
+
+      var addCard = function(message, data) {
+        if(data && data.payload_plain) {
+          if(data.payload_plain.match(/\{.+\}/g)) {
+            addFullScreenInfo(message, data);
+          }
+        }
+
+        // Create a new DOM elements
+        var newCard = document.createElement('li');
+        newCard.classList.add('card', 'drop-shadow');
+
+        var cardTitle = document.createElement('p');
+        cardTitle.classList.add('message');
+        cardTitle.innerText = message;
+        newCard.appendChild(cardTitle);
+
+        var cardTime = document.createElement('p');
+        cardTime.classList.add('message-time');
+        cardTime.innerText = moment().format('HH:mm');
+        newCard.appendChild(cardTime);
+
+        if (data) {
+          var fields = document.createElement('dl');
+          newCard.appendChild(fields);
+
+          for (var i in data) {
+            var fieldName = document.createElement('dt');
+            fieldName.innerText = i;
+
+            var fieldValue = document.createElement('dd');
+            fieldValue.innerText = data[i];
+
+            fields.appendChild(fieldName);
+            fields.appendChild(fieldValue);
+          }
+
+        }
+
+        // Append to the activity feed
+        var feed = document.querySelector('.feed');
+        feed.insertBefore(newCard, feed.firstChild);
+      };
+
+      document.querySelector('form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        document.querySelector('section.connect').classList.add('hidden');
+
+        // Start connection to The Things Network
+        socket.emit('start', { appId: event.currentTarget.app_id.value, accessKey: event.currentTarget.access_key.value, region: event.currentTarget.region.value });
+      });
+
+      document.querySelector('.button-clear').addEventListener('click', function(event) {
+        document.querySelector('.feed').innerHTML = '';
+      });
+
+      socket.on('ttn-connect', function (data) {
+        addCard('Connection successful');
+      });
+
+      socket.on('ttn-error', function (data) {
+        addCard('Error', data);
+      });
+
+      socket.on('uplink', function (data) {
+	//console.log(data);
+	//console.dir(data);
+
+        var details = {
+          time: moment(new Date(data.metadata.time)).format('MMM Do, HH:mm'),
+          dev_id: data.dev_id,
+          counter: data.counter,
+          gateways: data.metadata.gateways.map(function(gw) { return gw.gtw_id; }).join(', '),
+          rssi: data.metadata.gateways.map(function(gw) { return gw.rssi; }).join(', '),
+          snr: data.metadata.gateways.map(function(gw) { return gw.snr; }).join(', '),
+
+          frequency: data.metadata.frequency,
+          data_rate: data.metadata.data_rate
+        };
+
+        // Try to decode base64 to plain
+        if (data.payload_raw) {
+          try {
+            var decoded = String.fromCharCode.apply(null, new Uint8Array(data.payload_raw));
+            //fields.payload = payload.join(' ').toUpperCase();
+            details.payload_plain = decoded;
+          } catch(e) {
+            console.log(e);}
+        }
+
+        addCard('Uplink received', details);
+      });
+
+      socket.on('activation', function (data) {
+        addCard('Device activated', { devEUI: data.devEUI });
+      });
+    </script>
+  </body>
+</html>
