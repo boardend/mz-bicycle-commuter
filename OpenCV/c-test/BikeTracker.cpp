@@ -28,7 +28,8 @@ void drawKCFBoxes(Mat &frame,
 bool write_count(int count);
 
 static const int LOW_PASS = 0;
-static const string CLEAR_FILE = "clear.txt";
+static const string CLEAR_FILE = "/opt/mz-bicycle-commuter/reset";
+static const string LEFT_OUTPUT_FILE = "/opt/mz-bicycle-commuter/left.count";
 
 int main( int argc, char** argv )
 {
@@ -182,11 +183,10 @@ int main( int argc, char** argv )
 bool write_count(int count)
 {
     ofstream resultsFile;
-    string resultsPath = "output.txt"; // Write Results
     bool should_clear = std::ifstream(CLEAR_FILE).good();
     
     int file_count = should_clear ? 1 : count;
-    resultsFile.open(resultsPath);
+    resultsFile.open(LEFT_OUTPUT_FILE);
     resultsFile << file_count  << endl;
     resultsFile.close();
     if(should_clear) {
