@@ -35,7 +35,7 @@ int main( int argc, char** argv )
 {
     bool ENTER_LEAVE = true;
     bool FRAMES_FIRST = true;
-    
+
     Mat frame;
     Mat image;
     const char* keys =
@@ -43,16 +43,16 @@ int main( int argc, char** argv )
         "{@model_path    | | Path of the DPM cascade model}"
         "{@video_source    | | Video Source}"
     };
-    
+
     CommandLineParser parser(argc, argv, keys);
     string model_path(parser.get<string>(0));
-    
-    
+
+
     // init DPM
     Ptr<DPMDetector> detector = \
     DPMDetector::create(vector<string>(1, model_path));
     vector<DPMDetector::ObjectDetection> ds;
-    
+
     // init KCF
     Ptr<Tracker> tracker;
     Rect2d roi;
@@ -62,41 +62,45 @@ int main( int argc, char** argv )
     VideoCapture capture(0);
     capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
     capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
-    
+    capture.set(CV_CAP_PROP_CONVERT_RGB, false);
+    double fps = capture.get(CAP_PROP_FPS);
+
+     cout << fps << endl;
+
     if( model_path.empty() )
     {
         cerr << "Fail to open model file!" << endl;
         return -1;
     }
-    
+
     if ( !capture.isOpened() )
     {
         cerr << "Fail to open default camera (0)!" << endl;
         return -1;
     }
-    
+
     // create window
-    namedWindow("tracker", 1);
-    
+//    namedWindow("tracker", 1);
+
     while (true){
         //get the frame
         capture >> frame;
-        
+
         if ( frame.empty() ){
             cerr << "Fail to get video!" << endl;
             break;
         }
-        
+
         //DPM detection
         if( ENTER_LEAVE )
         {
             double t = (double) getTickCount(); //start time
-            
+
             frame.copyTo(image);
-            
+
             // detection
             detector->detect(image, ds);
-            
+
             ds.erase(std::remove_if(ds.begin(),
                                     ds.end(),
                                     [&](const DPMDetector::ObjectDetection& o)
@@ -108,40 +112,40 @@ int main( int argc, char** argv )
                 for (const auto i: ds)
                     std::cout << i.score << ' ';
                 cout << endl;
-                
+
                 ENTER_LEAVE = false;
                 FRAMES_FIRST = true;
-                
+
             }
-            
+
             t = ((double) getTickCount() - t)/getTickFrequency(); //elapsed time
             string text = format("%0.1f fps", 1.0/t); //calculate fps
-            
+
             // draw the tracked object
             Scalar color(0,0,255);
             drawDPMBoxes(frame, ds, color, text);
         } else {
-            
+
             //KCF tracking
             double t = (double) getTickCount(); //start time
             if ( FRAMES_FIRST )
             {
                 // get bounding box
                 roi = ds[0].rect;
-                
+
                 // initialize the tracker
                 tracker = Tracker::create("KCF");
                 bool success = tracker->init(frame,roi);
-                
+
                 FRAMES_FIRST = !success ;
             }
-            
+
             // Update
             else{
-                
+
                 // update the tracking result
                 bool was_successful = tracker->update(frame,roi);
-                
+
                 if (!was_successful) {
                     continue;
                 }
@@ -160,21 +164,21 @@ int main( int argc, char** argv )
                     } else {
                         count_text  = format("%ld bicycles!", count);
                     }
-                   
+
                     cout << count_text << endl;
-                  
+
                 }
             }
             t = ((double) getTickCount() - t)/getTickFrequency(); //elapsed time
             string text = format("%0.1f fps", 1.0/t); //calculate fps
-            
+
             // draw the tracked object
             Scalar color(0,0,255);
             drawKCFBoxes(frame, roi, color, text);
         }
-        
+
         // show image with the tracked object
-        imshow("tracker",frame);
+//        imshow("tracker",frame);
         if(waitKey(1)==27)break;
     }
     return 0;
@@ -184,7 +188,7 @@ bool write_count(int count)
 {
     ofstream resultsFile;
     bool should_clear = std::ifstream(CLEAR_FILE).good();
-    
+
     int file_count = should_clear ? 1 : count;
     resultsFile.open(LEFT_OUTPUT_FILE);
     resultsFile << file_count  << endl;
@@ -192,7 +196,7 @@ bool write_count(int count)
     if(should_clear) {
         remove(CLEAR_FILE.c_str());
     }
-    
+
     return should_clear;
 }
 
@@ -205,7 +209,7 @@ void drawDPMBoxes(Mat &frame,
     {
         rectangle(frame, ds[i].rect, color, 2);
     }
-    
+
     // draw text on image
     Scalar textColor(255,0,0);
     putText(frame, text, Point(10,50), FONT_HERSHEY_PLAIN, 2, textColor, 2);
@@ -217,7 +221,7 @@ void drawKCFBoxes(Mat &frame,
                   string text)
 {
     rectangle(frame, rect, color, 2);
-    
+
     // draw text on image
     Scalar textColor(255,0,0);
     putText(frame, text, Point(10,50), FONT_HERSHEY_PLAIN, 2, textColor, 2);
