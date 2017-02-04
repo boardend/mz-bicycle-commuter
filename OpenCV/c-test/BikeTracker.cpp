@@ -28,6 +28,8 @@ void drawKCFBoxes(Mat &frame,
 bool write_count(int count);
 
 static const float LOW_PASS = 0.5;
+static const int FRAME_WIDTH = 320;
+static const int FRAME_HEIGHT = 240;
 static const string CLEAR_FILE = "/opt/mz-bicycle-commuter/reset";
 static const string LEFT_OUTPUT_FILE = "/opt/mz-bicycle-commuter/left.count";
 
@@ -60,8 +62,8 @@ int main( int argc, char** argv )
     int count = 0;
     //use web camera
     VideoCapture capture(0);
-    capture.set(CV_CAP_PROP_FRAME_WIDTH, 320);
-    capture.set(CV_CAP_PROP_FRAME_HEIGHT, 240);
+    capture.set(CV_CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
+    capture.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
   //  capture.set(CV_CAP_PROP_CONVERT_RGB, false);
 	  capture.set(CV_CAP_PROP_FPS, 10);
     double fps = capture.get(CAP_PROP_FPS);
@@ -162,8 +164,8 @@ int main( int argc, char** argv )
                 }
                 result = roi;
                 //DPM model detect UAV's leave
-                int x_value = 640 - result.x + result.width/2;
-                int y_value = 480 - result.y + result.height/2;
+                int x_value = FRAME_WIDTH - result.x - result.width/2;
+                int y_value = FRAME_HEIGHT - result.y - result.height/2;
                 if (!(result.x > 0 && result.y > 0 && x_value > 0 && y_value > 0)){
                     ENTER_LEAVE = true;
                     count++;
