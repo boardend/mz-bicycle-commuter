@@ -25,7 +25,10 @@ void drawKCFBoxes(Mat &frame,
                   Scalar color,
                   string text);
 
+bool write_count(int count);
+
 static const int LOW_PASS = 0;
+static const string CLEAR_FILE = "clear.txt";
 
 int main( int argc, char** argv )
 {
@@ -34,9 +37,15 @@ int main( int argc, char** argv )
     
     Mat frame;
     Mat image;
+    const char* keys =
+    {
+        "{@model_path    | | Path of the DPM cascade model}"
+        "{@video_source    | | Video Source}"
+    };
     
-    // give model_path
-    string model_path("bicycle.xml");
+    CommandLineParser parser(argc, argv, keys);
+    string model_path(parser.get<string>(0));
+    
     
     // init DPM
     Ptr<DPMDetector> detector = \
@@ -44,12 +53,9 @@ int main( int argc, char** argv )
     vector<DPMDetector::ObjectDetection> ds;
     
     // init KCF
-    Ptr<Tracker> tracker = Tracker::create( "KCF" );
+    Ptr<Tracker> tracker;
     Rect2d roi;
     Rect result; // Tracker results
-    ofstream resultsFile;
-    string resultsPath = "output.txt"; // Write Results
-    resultsFile.open(resultsPath);
     int count = 0;
     //use web camera
     VideoCapture capture(0);
@@ -93,7 +99,7 @@ int main( int argc, char** argv )
             ds.erase(std::remove_if(ds.begin(),
                                     ds.end(),
                                     [&](const DPMDetector::ObjectDetection& o)
-            {return o.score<LOW_PASS;}
+                                    {return o.score<LOW_PASS;}
                                     ),
                      ds.end());
             if (!ds.empty())
@@ -113,9 +119,7 @@ int main( int argc, char** argv )
             // draw the tracked object
             Scalar color(0,0,255);
             drawDPMBoxes(frame, ds, color, text);
-        }
-        
-        else{
+        } else {
             
             //KCF tracking
             double t = (double) getTickCount(); //start time
@@ -125,25 +129,39 @@ int main( int argc, char** argv )
                 roi = ds[0].rect;
                 
                 // initialize the tracker
-                tracker->init(frame,roi);
+                tracker = Tracker::create("KCF");
+                bool success = tracker->init(frame,roi);
                 
-                FRAMES_FIRST = false;
+                FRAMES_FIRST = !success ;
             }
             
             // Update
             else{
                 
                 // update the tracking result
-                tracker->update(frame,roi);
+                bool was_successful = tracker->update(frame,roi);
                 
+                if (!was_successful) {
+                    continue;
+                }
                 result = roi;
-                resultsFile << result.x << "," << result.y << "," << result.width << "," << result.height << endl;
                 //DPM model detect UAV's leave
-                if (!(result.x > 0 && result.y > 0 && (640 - result.x - result.width) > 0 && (480 - result.y - result.height) > 0)){
+                int x_value = 640 - result.x + result.width/2;
+                int y_value = 480 - result.y + result.height/2;
+                if (!(result.x > 0 && result.y > 0 && x_value > 0 && y_value > 0)){
                     ENTER_LEAVE = true;
                     count++;
-                    string count_text = format("%ld bicycles!", count);
+                    bool reset_count = write_count(count);
+                     string count_text;
+                    if (reset_count) {
+                        count = 0;
+                        count_text = "Count was reset";
+                    } else {
+                        count_text  = format("%ld bicycles!", count);
+                    }
+                   
                     cout << count_text << endl;
+                  
                 }
             }
             t = ((double) getTickCount() - t)/getTickFrequency(); //elapsed time
@@ -159,6 +177,23 @@ int main( int argc, char** argv )
         if(waitKey(1)==27)break;
     }
     return 0;
+}
+
+bool write_count(int count)
+{
+    ofstream resultsFile;
+    string resultsPath = "output.txt"; // Write Results
+    bool should_clear = std::ifstream(CLEAR_FILE).good();
+    
+    int file_count = should_clear ? 1 : count;
+    resultsFile.open(resultsPath);
+    resultsFile << file_count  << endl;
+    resultsFile.close();
+    if(should_clear) {
+        remove(CLEAR_FILE.c_str());
+    }
+    
+    return should_clear;
 }
 
 void drawDPMBoxes(Mat &frame,
