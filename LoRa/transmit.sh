@@ -18,10 +18,10 @@ fi
 declare -i left=$(cat $LEFT_FILE)
 declare -i right=$(cat $RIGHT_FILE)
 
-JSON_MSG=\{left:\ $left\,\ right\:\ $right\}
+JSON_MSG=\{\"left\":\ $left\,\ \"right\"\:\ $right\}
 
 echo "###########################################"
-echo "# will transmit \""$JSON_MSG"\" now"
+echo "# will transmit "$JSON_MSG" now"
 echo "###########################################"
 
 timeout 10 cat < /dev/ttyUSB0 &
