@@ -27,7 +27,7 @@ void drawKCFBoxes(Mat &frame,
 
 bool write_count(int count);
 
-static const int LOW_PASS = 0;
+static const float LOW_PASS = 0.5;
 static const string CLEAR_FILE = "/opt/mz-bicycle-commuter/reset";
 static const string LEFT_OUTPUT_FILE = "/opt/mz-bicycle-commuter/left.count";
 
@@ -97,6 +97,7 @@ int main( int argc, char** argv )
         //DPM detection
         if( ENTER_LEAVE )
         {
+          
             if ((++frame_count % 10) != 0) {
               // cout << "skip" << endl;
               continue;
@@ -115,7 +116,7 @@ int main( int argc, char** argv )
             ds.erase(std::remove_if(ds.begin(),
                                     ds.end(),
                                     [&](const DPMDetector::ObjectDetection& o)
-                                    {return o.score<LOW_PASS;}
+                                    {return o.score < LOW_PASS;}
                                     ),
                      ds.end());
             if (!ds.empty())
@@ -126,7 +127,6 @@ int main( int argc, char** argv )
 
                 ENTER_LEAVE = false;
                 FRAMES_FIRST = true;
-
             }
 
             t = ((double) getTickCount() - t)/getTickFrequency(); //elapsed time
